@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Brand - 3D Shirt Customizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom UI Styling */
+        body { margin: 0; overflow: hidden; background-color: #f3f4f6; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 5px; background: #ddd; border-radius: 5px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #4f46e5; border-radius: 50%; cursor: pointer; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen">
+
+    <div id="canvas-container" class="w-full md:w-3/4 h-[60vh] md:h-full relative bg-gray-200">
+        <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 z-50">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+            <p class="text-gray-600 font-bold">Loading your 'shirt.glb' file...</p>
+            <p class="text-xs text-red-500 mt-2">(Use 'Live Server' if this sticks via VS Code)</p>
+        </div>
+    </div>
+
+    <div class="w-full md:w-1/4 h-[40vh] md:h-full bg-white shadow-xl flex flex-col z-20 overflow-y-auto">
+        <div class="p-5 space-y-6">
+            <h1 class="text-xl font-black text-gray-800 uppercase tracking-wide text-center">Customizer</h1>
+
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase">1. Base Color</label>
+                <div class="flex gap-2 mt-2 flex-wrap">
+                    <button onclick="updateColor('#ffffff')" class="w-8 h-8 rounded-full border border-gray-300 bg-white shadow-sm"></button>
+                    <button onclick="updateColor('#111827')" class="w-8 h-8 rounded-full border border-gray-300 bg-gray-900 shadow-sm"></button>
+                    <button onclick="updateColor('#ef4444')" class="w-8 h-8 rounded-full border border-gray-300 bg-red-500 shadow-sm"></button>
+                    <button onclick="updateColor('#3b82f6')" class="w-8 h-8 rounded-full border border-gray-300 bg-blue-500 shadow-sm"></button>
+                    <button onclick="updateColor('#10b981')" class="w-8 h-8 rounded-full border border-gray-300 bg-green-500 shadow-sm"></button>
+                    <div class="relative w-8 h-8 rounded-full overflow-hidden border border-gray-300 shadow-sm">
+                        <input type="color" oninput="updateColor(this.value)" class="absolute -top-2 -left-2 w-12 h-12 p-0 border-0 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t pt-4">
+                <label class="text-xs font-bold text-gray-500 uppercase">2. Add Logo</label>
+                <input type="file" id="logoInput" accept="image/*" class="mt-2 block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                
+                <div id="logoControls" class="hidden mt-3 bg-gray-50 p-3 rounded text-xs space-y-2">
+                    <div class="flex items-center justify-between"><span>Up/Down</span> <input type="range" min="-0.5" max="0.5" step="0.01" value="0" id="logoY" oninput="moveDecal('logo')"></div>
+                    <div class="flex items-center justify-between"><span>Left/Right</span> <input type="range" min="-0.3" max="0.3" step="0.01" value="0" id="logoX" oninput="moveDecal('logo')"></div>
+                    <div class="flex items-center justify-between"><span>Size</span> <input type="range" min="0.1" max="1.5" step="0.05" value="0.5" id="logoS" oninput="moveDecal('logo')"></div>
+                </div>
+            </div>
+
+            <div class="border-t pt-4">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-bold text-gray-500 uppercase">3. Add Text</label>
+                    <button onclick="removeText()" class="text-[10px] text-red-500 hover:underline hidden" id="clearTextBtn">Clear</button>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <input type="text" id="customText" placeholder="Type here..." class="w-full border rounded px-2 py-1 text-sm focus:ring-2 ring-indigo-500 outline-none">
+                    <input type="color" id="textColor" value="#000000" class="h-8 w-8 border-none bg-transparent cursor-pointer">
+                </div>
+                <button onclick="addText()" class="mt-2 w-full bg-indigo-600 text-white text-xs font-bold py-2 rounded hover:bg-indigo-700">Apply Text</button>
+
+                <div id="textControls" class="hidden mt-3 bg-gray-50 p-3 rounded text-xs space-y-2">
+                    <div class="flex items-center justify-between"><span>Up/Down</span> <input type="range" min="-0.5" max="0.5" step="0.01" value="0.1" id="textY" oninput="moveDecal('text')"></div>
+                    <div class="flex items-center justify-between"><span>Left/Right</span> <input type="range" min="-0.3" max="0.3" step="0.01" value="0" id="textX" oninput="moveDecal('text')"></div>
+                    <div class="flex items-center justify-between"><span>Size</span> <input type="range" min="0.2" max="2.0" step="0.1" value="0.8" id="textS" oninput="moveDecal('text')"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto p-5 border-t bg-gray-50 space-y-2">
+            <button id="genBtn" onclick="generateImages()" class="w-full bg-gray-800 text-white py-3 rounded font-bold text-sm hover:bg-black transition flex justify-center items-center gap-2">
+                <span id="genSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                Download 4 Angles
+            </button>
+            <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded font-bold text-sm hover:bg-green-600 transition flex justify-center items-center gap-2">
+                Order via WhatsApp
+            </button>
+            <p class="text-[10px] text-center text-gray-400">Attach downloaded images to the chat</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        // --- Configuration ---
+        const MODEL_FILE = 'shirt.glb'; // ඔයාගේ ෆයිල් එකේ නම මෙතන තියෙන්න ඕන
+        
+        let scene, camera, renderer, controls, shirtGroup;
+        let logoMesh, textMesh;
+        let currentColor = "#ffffff";
+
+        // --- Init ---
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe5e7eb);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(0, 0, 2);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambient);
+            
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            mainLight.position.set(2, 2, 5);
+            mainLight.castShadow = true;
+            scene.add(mainLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            fillLight.position.set(-2, 0, 2);
+            scene.add(fillLight);
+
+            // Load Model
+            const loader = new THREE.GLTFLoader();
+            loader.load(MODEL_FILE, (gltf) => {
+                shirtGroup = gltf.scene;
+
+                // Center the model automatically
+                const box = new THREE.Box3().setFromObject(shirtGroup);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+
+                // Reset position to center
+                shirtGroup.position.x += (shirtGroup.position.x - center.x);
+                shirtGroup.position.y += (shirtGroup.position.y - center.y);
+                shirtGroup.position.z += (shirtGroup.position.z - center.z);
+                
+                // Scale if too big/small (normalize to height ~1.5)
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = 1.5 / maxDim;
+                shirtGroup.scale.set(scale, scale, scale);
+
+                // Apply material settings
+                shirtGroup.traverse((node) => {
+                    if (node.isMesh) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                        // Replace material to allow color change but keep details if possible
+                        // Or just modify existing material color
+                        if(node.material) {
+                            node.material.color.set(currentColor);
+                            node.material.roughness = 0.6;
+                        }
+                    }
+                });
+
+                scene.add(shirtGroup);
+                document.getElementById('loader').style.display = 'none';
+            }, undefined, (err) => {
+                console.error(err);
+                const loaderEl = document.getElementById('loader');
+                loaderEl.innerHTML = `<p class="text-red-600 font-bold p-4">Error: Could not load 'shirt.glb'.<br>Check if file exists & you are using a Local Server.</p>`;
+            });
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.minDistance = 1;
+            controls.maxDistance = 5;
+
+            window.addEventListener('resize', onResize);
+            animate();
+        }
+
+        function onResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- Color Logic ---
+        window.updateColor = (color) => {
+            currentColor = color;
+            if(shirtGroup) {
+                shirtGroup.traverse((node) => {
+                    if(node.isMesh) node.material.color.set(color);
+                });
+            }
+        };
+
+        // --- Decal Logic (Logo & Text) ---
+        // Helper to add decal plane
+        function addDecalMesh(texture, type) {
+            // Remove old
+            if(type === 'logo' && logoMesh) { scene.remove(logoMesh); }
+            if(type === 'text' && textMesh) { scene.remove(textMesh); }
+
+            const geometry = new THREE.PlaneGeometry(1, 1);
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                depthTest: true,
+                depthWrite: false, // Sit on top
+                polygonOffset: true,
+                polygonOffsetFactor: -4 // Push forward visually
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(0, 0, 0.4); // Start slightly in front (adjust Z based on model thickness)
+            mesh.scale.set(0.5, 0.5, 1);
+            
+            scene.add(mesh);
+            
+            if(type === 'logo') { 
+                logoMesh = mesh; 
+                document.getElementById('logoControls').classList.remove('hidden');
+            } else { 
+                textMesh = mesh;
+                document.getElementById('textControls').classList.remove('hidden');
+                document.getElementById('clearTextBtn').classList.remove('hidden');
+            }
+            
+            moveDecal(type); // Apply initial slider values
+        }
+
+        window.moveDecal = (type) => {
+            const mesh = type === 'logo' ? logoMesh : textMesh;
+            if(!mesh) return;
+            
+            const suffix = type === 'logo' ? 'logo' : 'text';
+            const y = parseFloat(document.getElementById(suffix + 'Y').value);
+            const x = parseFloat(document.getElementById(suffix + 'X').value);
+            const s = parseFloat(document.getElementById(suffix + 'S').value);
+
+            mesh.position.y = y;
+            mesh.position.x = x;
+            // Z needs to be just outside the shirt bounding box usually. 
+            // Since we centered the shirt at 0,0,0, Z~0.2 to 0.5 works for front.
+            // If the decal disappears inside, increase this value manually in code:
+            mesh.position.z = 0.35; 
+
+            // Aspect ratio fix
+            if(type === 'text') mesh.scale.set(s * 2, s, 1);
+            else mesh.scale.set(s, s, 1);
+        };
+
+        // 1. Logo Input
+        document.getElementById('logoInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    new THREE.TextureLoader().load(ev.target.result, (tex) => {
+                        addDecalMesh(tex, 'logo');
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. Text Input
+        window.addText = () => {
+            const txt = document.getElementById('customText').value;
+            const col = document.getElementById('textColor').value;
+            if(!txt) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = col;
+            ctx.font = 'bold 100px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(txt, 512, 256);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            addDecalMesh(tex, 'text');
+        };
+
+        window.removeText = () => {
+            if(textMesh) { scene.remove(textMesh); textMesh = null; }
+            document.getElementById('textControls').classList.add('hidden');
+            document.getElementById('clearTextBtn').classList.add('hidden');
+            document.getElementById('customText').value = '';
+        };
+
+        // --- Export & WhatsApp ---
+        function downloadURI(uri, name) {
+            const link = document.createElement("a");
+            link.download = name;
+            link.href = uri;
+            link.click();
+        }
+
+        window.generateImages = async () => {
+            const btn = document.getElementById('genBtn');
+            const spin = document.getElementById('genSpinner');
+            btn.disabled = true; 
+            btn.classList.add('opacity-50');
+            spin.classList.remove('hidden');
+
+            const originalPos = camera.position.clone();
+            const originalTarget = controls.target.clone();
+
+            // Angles: Front, Back, Left, Right
+            const angles = [
+                { x: 0, y: 0, z: 2.5, name: 'front' },
+                { x: 0, y: 0, z: -2.5, name: 'back' },
+                { x: -2.5, y: 0, z: 0, name: 'left' },
+                { x: 2.5, y: 0, z: 0, name: 'right' }
+            ];
+
+            controls.enabled = false;
+
+            for(let ang of angles) {
+                camera.position.set(ang.x, ang.y, ang.z);
+                camera.lookAt(0,0,0);
+                await new Promise(r => setTimeout(r, 100)); // wait for move
+                renderer.render(scene, camera);
+                const data = renderer.domElement.toDataURL('image/png');
+                downloadURI(data, `design_${ang.name}.png`);
+                await new Promise(r => setTimeout(r, 500)); // wait between dls
+            }
+
+            // Reset
+            camera.position.copy(originalPos);
+            controls.target.copy(originalTarget);
+            controls.enabled = true;
+            controls.update();
+            
+            btn.disabled = false; 
+            btn.classList.remove('opacity-50');
+            spin.classList.add('hidden');
+            alert("Images downloaded!");
+        };
+
+        window.sendWhatsapp = () => {
+            const phone = "947XXXXXXXX"; // EDIT THIS
+            const txt = document.getElementById('customText').value;
+            const msg = `New Order!%0aColor: ${currentColor}%0aText: ${txt}%0a(See attached images)`;
+            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+        };
+
+        init();
+    </script>
+</body>
+</html>
