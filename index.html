@@ -3,113 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kinaa Cre - Pro Shirt Editor (Calibrated)</title>
+    <title>Kinaa Cre | Auto-Fit Shirt Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { overflow: hidden; background: #f3f4f6; }
+        body { overflow: hidden; background: #e5e7eb; font-family: 'Inter', sans-serif; }
         .canvas-bg { background-image: url('https://img.freepik.com/free-vector/gray-grid-mosaic-background_53876-118281.jpg'); background-size: cover; }
-        .active-btn { background-color: #4f46e5 !important; color: white !important; }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
-        input[type=range] { cursor: pointer; }
+        .active-side { background-color: #2563eb !important; color: white !important; border-color: #2563eb !important; }
+        input[type=range] { accent-color: #2563eb; height: 6px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
-<body class="flex h-screen text-gray-800 font-sans">
+<body class="flex h-screen text-gray-800">
 
-    <div class="w-[450px] flex flex-col bg-white shadow-2xl z-10 border-r border-gray-200 h-full">
+    <div class="w-[400px] flex flex-col bg-white shadow-2xl z-20 border-r border-gray-300 h-full">
         
-        <div class="p-4 border-b bg-gray-50">
-            <h1 class="font-black text-xl tracking-tighter text-indigo-600">KINAA CRE <span class="text-gray-400 text-sm font-normal">| Editor</span></h1>
+        <div class="p-5 border-b bg-gray-50 flex justify-between items-center">
+            <h1 class="font-black text-xl tracking-tight text-gray-800">KINAA CRE <span class="text-blue-600">EDITOR</span></h1>
+            <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold">AUTO-FIT V2</span>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
+        <div class="flex-1 overflow-y-auto p-5 space-y-6">
 
             <div>
-                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">1. Select Side</label>
-                <div class="flex border-2 border-gray-200 rounded-lg overflow-hidden">
-                    <button onclick="switchView('front')" id="btnFront" class="flex-1 py-2 font-bold text-sm active-btn transition">FRONT</button>
-                    <button onclick="switchView('back')" id="btnBack" class="flex-1 py-2 font-bold text-sm bg-gray-100 text-gray-600 transition">BACK</button>
+                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">1. Choose Side</label>
+                <div class="flex rounded-lg overflow-hidden border border-gray-300">
+                    <button onclick="switchView('front')" id="btnFront" class="flex-1 py-3 font-bold text-sm active-side transition bg-gray-50 text-gray-600">FRONT</button>
+                    <button onclick="switchView('back')" id="btnBack" class="flex-1 py-3 font-bold text-sm transition bg-gray-50 text-gray-600 border-l">BACK</button>
                 </div>
             </div>
 
             <div>
-                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">2. Design Here</label>
-                <div class="relative border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
-                    
-                    <div id="front-canvas-wrapper" class="canvas-bg shadow-sm">
-                        <canvas id="c-front" width="300" height="400"></canvas>
-                    </div>
-                    <div id="back-canvas-wrapper" class="canvas-bg shadow-sm hidden">
-                        <canvas id="c-back" width="300" height="400"></canvas>
-                    </div>
-
-                    <div class="absolute bottom-2 left-0 w-full text-center pointer-events-none">
-                         <span class="text-[10px] bg-white/80 px-2 py-1 rounded text-gray-500">Editable Area</span>
-                    </div>
+                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">2. Customize Design</label>
+                
+                <div class="relative border-2 border-dashed border-gray-300 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden group">
+                    <div id="front-wrapper" class="canvas-bg"><canvas id="c-front" width="280" height="350"></canvas></div>
+                    <div id="back-wrapper" class="canvas-bg hidden"><canvas id="c-back" width="280" height="350"></canvas></div>
+                    <div class="absolute bottom-0 w-full bg-white/90 text-center py-1 text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition">Interactive Area</div>
                 </div>
 
-                <div class="flex gap-2 mt-3 flex-wrap">
-                    <button onclick="addText()" class="flex-1 bg-gray-800 text-white py-2 rounded text-xs font-bold hover:bg-black">+ Text</button>
-                    <label class="flex-1 bg-indigo-600 text-white py-2 rounded text-xs font-bold hover:bg-indigo-700 cursor-pointer text-center">
-                        + Image
+                <div class="grid grid-cols-3 gap-2 mt-3">
+                    <button onclick="addText()" class="bg-gray-800 text-white py-2 rounded text-xs font-bold hover:bg-black transition">+ TEXT</button>
+                    <label class="bg-blue-600 text-white py-2 rounded text-xs font-bold hover:bg-blue-700 transition cursor-pointer text-center">
+                        + IMAGE
                         <input type="file" id="imgLoader" accept="image/*" class="hidden">
                     </label>
-                    <button onclick="deleteObject()" class="w-8 flex items-center justify-center bg-red-100 text-red-600 rounded hover:bg-red-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <button onclick="deleteObj()" class="bg-red-100 text-red-600 py-2 rounded text-xs font-bold hover:bg-red-200 transition">DELETE</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">3. Position & Scale</label>
+                    <button onclick="autoSnap()" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 font-bold flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Auto-Fix
                     </button>
                 </div>
-            </div>
 
-            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="text-xs font-bold text-blue-800 uppercase">3. Calibrate Position</label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        <input type="checkbox" id="showHelper" onchange="toggleHelper(this.checked)" class="rounded text-blue-600">
-                        <span class="text-[10px] text-blue-600 font-bold">Show Box</span>
-                    </label>
-                </div>
-                
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div>
-                        <div class="flex justify-between text-[10px] text-gray-500 mb-1"><span>Move Up/Down</span> <span id="valY">0</span></div>
-                        <input type="range" min="-0.5" max="0.5" step="0.01" value="0.1" id="sliderY" oninput="updatePrintConfig()">
+                        <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                            <span>Vertical (Up/Down)</span>
+                            <span id="dispY">0</span>
+                        </div>
+                        <input type="range" min="-1.5" max="1.5" step="0.01" value="0.2" id="sliderY" oninput="manualUpdate()" class="w-full">
                     </div>
-                    <div>
-                        <div class="flex justify-between text-[10px] text-gray-500 mb-1"><span>Area Size (Scale)</span> <span id="valS">1.0</span></div>
-                        <input type="range" min="0.5" max="2.0" step="0.05" value="1.0" id="sliderS" oninput="updatePrintConfig()">
-                    </div>
-                </div>
-                <p class="text-[10px] text-blue-500 mt-2 leading-tight">
-                    * If design is too high, drag "Move Up/Down" to the left. <br>
-                    * Use "Show Box" to see where the design area is.
-                </p>
-            </div>
 
-            <div>
-                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">4. Shirt Color</label>
-                <div class="flex items-center gap-2">
-                    <input type="color" id="tshirtColor" value="#ffffff" oninput="changeShirtColor(this.value)" class="h-10 w-full cursor-pointer border rounded">
+                    <div>
+                        <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                            <span>Design Size</span>
+                            <span id="dispS">1.0</span>
+                        </div>
+                        <input type="range" min="0.2" max="2.5" step="0.05" value="1.0" id="sliderS" oninput="manualUpdate()" class="w-full">
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                            <span>Depth (In/Out)</span>
+                            <span class="text-[9px] text-gray-400">(Use if flickering)</span>
+                        </div>
+                        <input type="range" min="0.1" max="1.0" step="0.01" value="0.35" id="sliderZ" oninput="manualUpdate()" class="w-full">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-gray-400 uppercase">Shirt Color</label>
+                <div class="flex gap-2">
+                    <button onclick="setColor('#ffffff')" class="w-6 h-6 rounded-full border border-gray-300 bg-white shadow-sm"></button>
+                    <button onclick="setColor('#111827')" class="w-6 h-6 rounded-full border border-gray-300 bg-gray-900 shadow-sm"></button>
+                    <button onclick="setColor('#dc2626')" class="w-6 h-6 rounded-full border border-gray-300 bg-red-600 shadow-sm"></button>
+                    <input type="color" oninput="setColor(this.value)" class="w-6 h-6 rounded-full overflow-hidden border-none p-0 cursor-pointer">
                 </div>
             </div>
 
         </div>
 
-        <div class="p-4 border-t bg-gray-50">
-             <button onclick="downloadWithWatermark()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                DOWNLOAD DESIGN
+        <div class="p-5 border-t bg-gray-50">
+            <button onclick="downloadDesign()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg flex items-center justify-center gap-2 transform active:scale-95 transition">
+                <span>DOWNLOAD PREVIEW</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             </button>
-             <p class="text-[10px] text-gray-400 text-center mt-2">Protected by "kinaa cre" watermark.</p>
+            <p class="text-[10px] text-center text-gray-400 mt-2">Protected by kinaa cre watermark</p>
         </div>
     </div>
 
-    <div id="3d-view" class="flex-1 bg-gray-300 relative shadow-inner">
-        <div id="loader" class="absolute inset-0 flex items-center justify-center text-gray-500 font-bold z-20 bg-gray-200/90">
+    <div id="canvas-container" class="flex-1 relative bg-gray-200 cursor-move">
+        <div id="loading" class="absolute inset-0 flex items-center justify-center z-10 bg-gray-200/90 backdrop-blur-sm">
             <div class="text-center">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 mx-auto mb-2"></div>
-                Loading Model...
+                <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <h2 class="text-gray-600 font-bold animate-pulse">Analyzing Geometry...</h2>
             </div>
         </div>
     </div>
@@ -120,240 +122,282 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
     <script>
-        // ================= STATE =================
-        let currentView = 'front'; 
-        let printConfig = { y: 0.1, scale: 1.0 }; // Default values
+        // --- 1. CONFIGURATION ---
+        let currentSide = 'front';
+        let shirtMesh, frontDecal, backDecal;
+        let scene, camera, renderer, controls;
+        const MODEL_URL = 'shirt.glb'; // Make sure this file exists!
 
-        // ================= FABRIC JS (2D) =================
-        const fabricFront = new fabric.Canvas('c-front', { backgroundColor: '#ffffff00' }); // Transparent
-        const fabricBack = new fabric.Canvas('c-back', { backgroundColor: '#ffffff00' });
-
-        // Add placeholders
-        const t1 = new fabric.Text('FRONT', { left: 80, top: 180, fontFamily: 'Arial', fill: '#333', fontSize: 40, opacity: 0.3 });
-        const t2 = new fabric.Text('BACK', { left: 90, top: 180, fontFamily: 'Arial', fill: '#333', fontSize: 40, opacity: 0.3 });
-        fabricFront.add(t1);
-        fabricBack.add(t2);
-
-        function getCurrentCanvas() { return currentView === 'front' ? fabricFront : fabricBack; }
-
-        window.switchView = function(view) {
-            currentView = view;
-            document.getElementById('btnFront').classList.toggle('active-btn', view === 'front');
-            document.getElementById('btnBack').classList.toggle('active-btn', view === 'back');
-            document.getElementById('btnFront').classList.toggle('bg-gray-100', view !== 'front');
-            document.getElementById('btnBack').classList.toggle('bg-gray-100', view !== 'back');
-            
-            document.getElementById('front-canvas-wrapper').classList.toggle('hidden', view !== 'front');
-            document.getElementById('back-canvas-wrapper').classList.toggle('hidden', view !== 'back');
-            
-            moveCameraToView(view);
-        }
-
-        // Tools
-        window.addText = function() {
-            const t = new fabric.IText('Text', { left: 100, top: 100, fontFamily: 'Arial', fill: '#000000', fontSize: 30 });
-            getCurrentCanvas().add(t); getCurrentCanvas().setActiveObject(t);
-        }
-
-        document.getElementById('imgLoader').addEventListener('change', function(e) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const imgObj = new Image();
-                imgObj.src = event.target.result;
-                imgObj.onload = function() {
-                    const imgInstance = new fabric.Image(imgObj);
-                    imgInstance.scaleToWidth(150);
-                    getCurrentCanvas().add(imgInstance);
-                    getCurrentCanvas().centerObject(imgInstance);
-                }
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        });
-
-        window.deleteObject = function() {
-            const c = getCurrentCanvas();
-            if(c.getActiveObject()) c.remove(c.getActiveObject());
-        }
-
-        // ================= THREE JS (3D) =================
-        let scene, camera, renderer, controls, shirtMesh;
-        let frontTexture, backTexture, frontPlaneMesh, backPlaneMesh;
-        let boxHelperFront, boxHelperBack;
-
-        const Z_OFFSET_FRONT = 0.35; // How far out from shirt
-        const Z_OFFSET_BACK = -0.35;
+        // Fabric.js Setup (2D)
+        const fCanvas = new fabric.Canvas('c-front', { backgroundColor: 'transparent' });
+        const bCanvas = new fabric.Canvas('c-back', { backgroundColor: 'transparent' });
         
-        function init3D() {
-            const container = document.getElementById('3d-view');
-            scene = new THREE.Scene(); scene.background = new THREE.Color(0xd1d5db);
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            camera.position.set(0, 0, 2.5);
+        // Add default text
+        fCanvas.add(new fabric.Text('FRONT', { left: 80, top: 150, fontSize: 40, fontFamily: 'Arial', fill:'rgba(0,0,0,0.3)' }));
+        bCanvas.add(new fabric.Text('BACK', { left: 90, top: 150, fontSize: 40, fontFamily: 'Arial', fill:'rgba(0,0,0,0.3)' }));
 
+        // --- 2. THREE.JS SETUP (3D) ---
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xd1d5db);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(0, 0, 3.5);
+
+            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.shadowMap.enabled = true;
             renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            renderer.toneMappingExposure = 2; // Brighter lighting
             container.appendChild(renderer.domElement);
 
             // Lights
-            const ambient = new THREE.AmbientLight(0xffffff, 0.8); scene.add(ambient);
-            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8); mainLight.position.set(3, 5, 5); mainLight.castShadow = true; scene.add(mainLight);
-            const backLight = new THREE.DirectionalLight(0xffffff, 0.5); backLight.position.set(-3, 2, -5); scene.add(backLight);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambient);
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            scene.add(mainLight);
+            const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            backLight.position.set(-5, 5, -10);
+            scene.add(backLight);
 
-            // Textures
-            frontTexture = new THREE.CanvasTexture(document.getElementById('c-front'));
-            backTexture = new THREE.CanvasTexture(document.getElementById('c-back'));
-            frontTexture.encoding = THREE.sRGBEncoding;
-            backTexture.encoding = THREE.sRGBEncoding;
-            frontTexture.anisotropy = 16;
-            
-            // --- PRINT PLANES ---
-            const planeGeo = new THREE.PlaneGeometry(0.75, 1.0); // Aspect ratio similar to 300x400 canvas
-            
-            // Front Plane
-            const frontMat = new THREE.MeshBasicMaterial({ map: frontTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-            frontPlaneMesh = new THREE.Mesh(planeGeo, frontMat);
-            frontPlaneMesh.position.set(0, printConfig.y, Z_OFFSET_FRONT);
-            scene.add(frontPlaneMesh);
+            // --- DECAL PLANES (The design holders) ---
+            const geo = new THREE.PlaneGeometry(0.8, 1.0); // Standard aspect ratio
 
-            // Back Plane
-            const backMat = new THREE.MeshBasicMaterial({ map: backTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-            backPlaneMesh = new THREE.Mesh(planeGeo, backMat);
-            backPlaneMesh.rotation.y = Math.PI;
-            backPlaneMesh.position.set(0, printConfig.y, Z_OFFSET_BACK);
-            scene.add(backPlaneMesh);
+            // Create Textures
+            const fTex = new THREE.CanvasTexture(document.getElementById('c-front'));
+            const bTex = new THREE.CanvasTexture(document.getElementById('c-back'));
+            fTex.encoding = THREE.sRGBEncoding; bTex.encoding = THREE.sRGBEncoding;
+            fTex.anisotropy = 16; bTex.anisotropy = 16;
 
-            // Helpers (Visual Box)
-            boxHelperFront = new THREE.BoxHelper(frontPlaneMesh, 0x0000ff);
-            boxHelperBack = new THREE.BoxHelper(backPlaneMesh, 0x0000ff);
-            boxHelperFront.visible = false; 
-            boxHelperBack.visible = false;
-            scene.add(boxHelperFront);
-            scene.add(boxHelperBack);
+            // Front Material
+            const fMat = new THREE.MeshBasicMaterial({ 
+                map: fTex, transparent: true, depthWrite: false, 
+                polygonOffset: true, polygonOffsetFactor: -4 
+            });
+            frontDecal = new THREE.Mesh(geo, fMat);
+            scene.add(frontDecal);
 
-            // Load Shirt
+            // Back Material
+            const bMat = new THREE.MeshBasicMaterial({ 
+                map: bTex, transparent: true, depthWrite: false, 
+                polygonOffset: true, polygonOffsetFactor: -4 
+            });
+            backDecal = new THREE.Mesh(geo, bMat);
+            backDecal.rotation.y = Math.PI; // Face backwards
+            scene.add(backDecal);
+
+            // --- LOAD MODEL & AUTO-FIX ---
             const loader = new THREE.GLTFLoader();
-            loader.load('shirt.glb', function(gltf) {
+            loader.load(MODEL_URL, (gltf) => {
                 shirtMesh = gltf.scene;
-                
-                // Auto Center
+
+                // 1. Center the geometry exactly
                 const box = new THREE.Box3().setFromObject(shirtMesh);
                 const center = box.getCenter(new THREE.Vector3());
-                shirtMesh.position.sub(center); 
-                
-                // Auto Scale
                 const size = box.getSize(new THREE.Vector3());
+
+                // Reset position to (0,0,0) based on center
+                shirtMesh.position.x = -center.x;
+                shirtMesh.position.y = -center.y;
+                shirtMesh.position.z = -center.z;
+
+                // 2. Normalize Scale (Make it fit screen)
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const scale = 1.5 / maxDim;
+                const scale = 2.0 / maxDim; // Slightly larger scale
                 shirtMesh.scale.set(scale, scale, scale);
 
+                // Add to a group to manage transforms easily
+                const group = new THREE.Group();
+                group.add(shirtMesh);
+                scene.add(group);
+
+                // Material fix
                 shirtMesh.traverse(child => {
-                    if(child.isMesh) {
-                        child.castShadow = true; 
+                    if (child.isMesh) {
+                        child.castShadow = true;
                         child.receiveShadow = true;
-                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: 0xffffff, roughness: 0.6, metalness: 0.1
+                        });
                     }
                 });
-                scene.add(shirtMesh);
-                document.getElementById('loader').style.display = 'none';
+
+                document.getElementById('loading').style.display = 'none';
+
+                // --- 3. INTELLIGENT AUTO-PLACEMENT (The Magic) ---
+                // Recalculate box after scaling
+                const newBox = new THREE.Box3().setFromObject(group);
+                const newSize = newBox.getSize(new THREE.Vector3());
+                
+                // Estimate Chest Height (Approx 20% down from top)
+                const topY = newBox.max.y;
+                const chestHeight = topY - (newSize.y * 0.25);
+                
+                // Estimate Depth (Front Z and Back Z)
+                const frontZ = newBox.max.z + 0.05; // Slightly in front of bounding box
+                const backZ = newBox.min.z - 0.05;  // Slightly behind bounding box
+
+                // Apply initial positions
+                frontDecal.position.set(0, chestHeight, frontZ);
+                backDecal.position.set(0, chestHeight, backZ);
+
+                // Update Sliders to match reality
+                document.getElementById('sliderY').value = chestHeight;
+                document.getElementById('sliderZ').value = Math.abs(frontZ);
+
+                // Helper: console log for debugging
+                console.log("Auto-Detected Chest Y:", chestHeight);
+                console.log("Auto-Detected Front Z:", frontZ);
+
+            }, undefined, (e) => {
+                console.error(e);
+                alert("Error loading 'shirt.glb'. Make sure file is in folder.");
             });
 
+            // Controls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.maxPolarAngle = Math.PI / 1.5;
 
+            // Loop
             animate();
-            window.addEventListener('resize', () => {
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-            });
+            window.addEventListener('resize', onResize);
         }
 
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
-            if(frontTexture) frontTexture.needsUpdate = true;
-            if(backTexture) backTexture.needsUpdate = true;
-            
-            // Update helpers if visible
-            if(boxHelperFront.visible) { boxHelperFront.update(); boxHelperBack.update(); }
+            if(frontDecal.material.map) frontDecal.material.map.needsUpdate = true;
+            if(backDecal.material.map) backDecal.material.map.needsUpdate = true;
         }
 
-        // ================= FUNCTIONS =================
+        function onResize() {
+            const c = document.getElementById('canvas-container');
+            camera.aspect = c.clientWidth / c.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(c.clientWidth, c.clientHeight);
+        }
 
-        window.moveCameraToView = function(view) {
-            const z = view === 'front' ? 2.5 : -2.5;
+        // --- 3. INTERACTION LOGIC ---
+
+        window.switchView = function(side) {
+            currentSide = side;
+            // UI Toggle
+            document.getElementById('btnFront').className = side === 'front' ? 'flex-1 py-3 font-bold text-sm active-side transition bg-blue-600 text-white' : 'flex-1 py-3 font-bold text-sm transition bg-gray-50 text-gray-600';
+            document.getElementById('btnBack').className = side === 'back' ? 'flex-1 py-3 font-bold text-sm active-side transition bg-blue-600 text-white' : 'flex-1 py-3 font-bold text-sm transition bg-gray-50 text-gray-600 border-l';
+            
+            // Canvas Toggle
+            document.getElementById('front-wrapper').classList.toggle('hidden', side !== 'front');
+            document.getElementById('back-wrapper').classList.toggle('hidden', side !== 'back');
+
+            // Camera Move
+            const z = side === 'front' ? 3.5 : -3.5;
             camera.position.set(0, 0, z);
             controls.target.set(0,0,0);
-            controls.update();
         }
 
-        window.changeShirtColor = function(color) {
-            if(shirtMesh) shirtMesh.traverse(c => { if(c.isMesh) c.material.color.set(color); });
+        function getCanvas() { return currentSide === 'front' ? fCanvas : bCanvas; }
+
+        window.addText = () => {
+            const t = new fabric.IText('HELLO', { left: 80, top: 100, fontSize: 30, fontFamily: 'Arial', fontWeight:'bold' });
+            getCanvas().add(t); getCanvas().setActiveObject(t);
         }
 
-        // --- NEW: Calibration Logic ---
-        window.updatePrintConfig = function() {
+        document.getElementById('imgLoader').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.src = ev.target.result;
+                img.onload = () => {
+                    const i = new fabric.Image(img);
+                    i.scaleToWidth(150);
+                    getCanvas().add(i); getCanvas().centerObject(i);
+                }
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        window.deleteObj = () => {
+            if(getCanvas().getActiveObject()) getCanvas().remove(getCanvas().getActiveObject());
+        }
+
+        // --- 4. POSITIONING LOGIC ---
+
+        window.manualUpdate = () => {
             const y = parseFloat(document.getElementById('sliderY').value);
             const s = parseFloat(document.getElementById('sliderS').value);
-            
-            document.getElementById('valY').innerText = y;
-            document.getElementById('valS').innerText = s;
+            const z = parseFloat(document.getElementById('sliderZ').value);
 
-            if(frontPlaneMesh && backPlaneMesh) {
-                // Update Y position
-                frontPlaneMesh.position.y = y;
-                backPlaneMesh.position.y = y;
+            document.getElementById('dispY').innerText = y.toFixed(2);
+            document.getElementById('dispS').innerText = s.toFixed(1);
 
-                // Update Scale
-                frontPlaneMesh.scale.set(s, s, 1);
-                backPlaneMesh.scale.set(s, s, 1);
-            }
-        }
-
-        window.toggleHelper = function(checked) {
-            if(boxHelperFront && boxHelperBack) {
-                boxHelperFront.visible = checked;
-                boxHelperBack.visible = checked;
-            }
-        }
-
-        // --- Watermark Download ---
-        window.downloadWithWatermark = function() {
-            moveCameraToView(currentView);
-            // Render High Res
-            renderer.render(scene, camera);
-            
-            const tempCanvas = document.createElement('canvas');
-            const ctx = tempCanvas.getContext('2d');
-            tempCanvas.width = renderer.domElement.width;
-            tempCanvas.height = renderer.domElement.height;
-
-            const img = new Image();
-            img.onload = function() {
-                ctx.drawImage(img, 0, 0);
+            if(frontDecal && backDecal) {
+                // Update Height
+                frontDecal.position.y = y;
+                backDecal.position.y = y;
                 
+                // Update Scale
+                frontDecal.scale.set(s, s, 1);
+                backDecal.scale.set(s, s, 1);
+
+                // Update Depth (Z) - Keep symmetrical
+                // Front uses +Z, Back uses -Z
+                frontDecal.position.z = z; 
+                backDecal.position.z = -z;
+            }
+        }
+
+        window.autoSnap = () => {
+            // Reset to safe defaults
+            document.getElementById('sliderY').value = 0.2;
+            document.getElementById('sliderS').value = 1.0;
+            document.getElementById('sliderZ').value = 0.4;
+            manualUpdate();
+            alert("Position reset to Auto-Detected center.");
+        }
+
+        window.setColor = (col) => {
+            if(shirtMesh) shirtMesh.traverse(c => { if(c.isMesh) c.material.color.set(col); });
+        }
+
+        window.downloadDesign = () => {
+            // Force render
+            renderer.render(scene, camera);
+            const canvas = document.createElement('canvas');
+            canvas.width = renderer.domElement.width;
+            canvas.height = renderer.domElement.height;
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
                 // Watermark
-                const text = "kinaa cre";
-                ctx.font = "bold 60px sans-serif";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-                ctx.textAlign = "center";
                 ctx.save();
-                ctx.translate(tempCanvas.width/2, tempCanvas.height/2);
-                ctx.rotate(-Math.PI / 4);
-                ctx.fillText(text, 0, 0);
+                ctx.translate(canvas.width/2, canvas.height/2);
+                ctx.rotate(-Math.PI/4);
+                ctx.font = "bold 80px sans-serif";
+                ctx.fillStyle = "rgba(255,255,255,0.4)";
+                ctx.textAlign = "center";
+                ctx.fillText("kinaa cre", 0, 0);
                 ctx.restore();
 
-                const link = document.createElement('a');
-                link.download = `kinaa_cre_design_${currentView}.png`;
-                link.href = tempCanvas.toDataURL('image/png');
-                link.click();
+                const a = document.createElement('a');
+                a.download = `kinaa_design_${currentSide}.png`;
+                a.href = canvas.toDataURL();
+                a.click();
             };
-            img.src = renderer.domElement.toDataURL('image/png');
+            img.src = renderer.domElement.toDataURL();
         }
 
+        // START
         init3D();
 
     </script>
