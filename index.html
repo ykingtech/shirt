@@ -3,240 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed 3D Shirt Designer</title>
+    <title>Pro Shirt Editor (PSD Style)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #e5e7eb; }
-        /* Control Panel Styles */
-        .control-group { margin-bottom: 15px; }
-        label { font-size: 12px; font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-        input[type=range] { width: 100%; cursor: pointer; }
+        body { overflow: hidden; background: #f3f4f6; }
+        /* Editor Canvas Style */
+        .canvas-container { background-image: url('https://img.freepik.com/free-vector/gray-grid-mosaic-background_53876-118281.jpg'); background-size: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen">
+<body class="flex h-screen text-gray-800">
 
-    <div id="canvas-container" class="w-full md:w-3/4 h-[60vh] md:h-full relative bg-gray-300">
-        <div id="loading" class="absolute inset-0 flex items-center justify-center text-gray-600 font-bold bg-gray-200 z-50">
-            Loading Shirt... (Please Wait)
+    <div class="w-1/2 flex flex-col p-4 bg-white shadow-xl z-10">
+        <h2 class="text-2xl font-black mb-4 flex items-center gap-2">
+            <span class="text-indigo-600">DESIGN</span> AREA
+        </h2>
+
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <button onclick="addText()" class="bg-gray-800 text-white px-4 py-2 rounded font-bold text-sm hover:bg-black">+ Add Text</button>
+            <label class="bg-indigo-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-indigo-700 cursor-pointer">
+                + Upload Image
+                <input type="file" id="imgLoader" accept="image/*" class="hidden">
+            </label>
+            <button onclick="deleteObject()" class="bg-red-500 text-white px-4 py-2 rounded font-bold text-sm hover:bg-red-600">Delete Selected</button>
+            <input type="color" id="tshirtColor" value="#ffffff" oninput="changeShirtColor(this.value)" class="h-10 w-10 cursor-pointer border rounded" title="Shirt Color">
+        </div>
+
+        <div class="flex-1 flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl relative">
+            <p class="absolute top-2 text-xs text-gray-400 font-bold">PRINT AREA (Dragging Zone)</p>
+            <canvas id="c" width="400" height="500"></canvas>
+        </div>
+        
+        <p class="text-xs text-gray-500 mt-2 text-center">Drag, Rotate & Resize items inside the box.</p>
+    </div>
+
+    <div id="3d-view" class="w-1/2 bg-gray-200 relative">
+        <div id="loader" class="absolute inset-0 flex items-center justify-center text-gray-500 font-bold">
+            Loading 3D Model...
         </div>
     </div>
 
-    <div class="w-full md:w-1/4 bg-white p-5 shadow-2xl overflow-y-auto h-[40vh] md:h-full z-10">
-        <h2 class="text-xl font-bold mb-4 text-center border-b pb-2">DESIGN PANEL</h2>
-
-        <div class="control-group">
-            <label>1. SHIRT COLOR</label>
-            <div class="flex gap-2">
-                <input type="color" id="colorPicker" value="#ffffff" class="w-full h-10 cursor-pointer border-none" oninput="updateColor(this.value)">
-            </div>
-        </div>
-
-        <div class="control-group bg-gray-50 p-3 rounded">
-            <label>2. MANUAL ADJUSTMENTS (If needed)</label>
-            <div class="text-xs text-gray-500 mb-1">Rotate / Zoom</div>
-            <input type="range" min="0.5" max="3" step="0.1" value="1" oninput="manualZoom(this.value)">
-            <div class="text-xs text-gray-500 mt-2">Move Up/Down</div>
-            <input type="range" min="-2" max="2" step="0.1" value="0" oninput="manualMoveY(this.value)">
-        </div>
-
-        <div class="control-group border-t pt-4">
-            <label>3. ADD LOGO</label>
-            <input type="file" id="logoInput" accept="image/*" class="text-xs w-full mb-2">
-            
-            <label>LOGO POSITION</label>
-            <input type="range" id="logoY" min="-1" max="1" step="0.05" value="0.2" class="mb-2" oninput="updateDecalTrans()">
-            <input type="range" id="logoS" min="0.1" max="1.5" step="0.05" value="0.5" oninput="updateDecalTrans()">
-        </div>
-
-        <button onclick="downloadShot()" class="w-full bg-black text-white py-3 rounded font-bold mt-4 hover:bg-gray-800">
-            Download Image
-        </button>
-    </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
     <script>
-        let scene, camera, renderer, controls, shirtMesh, decalMesh;
-        const loaderDiv = document.getElementById('loading');
+        // ==========================================
+        // PART 1: FABRIC.JS (THE 2D EDITOR)
+        // ==========================================
+        const canvas = new fabric.Canvas('c');
+        
+        // Add a placeholder text on load
+        const text = new fabric.Text('YOUR BRAND', {
+            left: 100, top: 200, fontFamily: 'Arial', fill: '#000', fontSize: 40
+        });
+        canvas.add(text);
 
-        function init() {
-            // 1. Scene Setup
-            const container = document.getElementById('canvas-container');
+        // Update 3D texture whenever 2D canvas changes
+        canvas.on('after:render', function() {
+            if(textureMesh && textureMesh.material.map) {
+                textureMesh.material.map.needsUpdate = true;
+            }
+        });
+
+        // --- 2D Functions ---
+        function addText() {
+            const t = new fabric.IText('New Text', {
+                left: 50, top: 50, fontFamily: 'Arial', fill: '#000', fontSize: 30
+            });
+            canvas.add(t);
+            canvas.setActiveObject(t);
+        }
+
+        document.getElementById('imgLoader').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imgObj = new Image();
+                imgObj.src = event.target.result;
+                imgObj.onload = function() {
+                    const imgInstance = new fabric.Image(imgObj);
+                    imgInstance.scaleToWidth(200);
+                    canvas.add(imgInstance);
+                    canvas.centerObject(imgInstance);
+                }
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        function deleteObject() {
+            const activeObj = canvas.getActiveObject();
+            if (activeObj) {
+                canvas.remove(activeObj);
+            }
+        }
+
+        // ==========================================
+        // PART 2: THREE.JS (THE 3D PREVIEW)
+        // ==========================================
+        let scene, camera, renderer, shirtMesh, textureMesh;
+        
+        function init3D() {
+            const container = document.getElementById('3d-view');
+            
+            // Scene
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xd1d5db); // Light Gray
+            scene.background = new THREE.Color(0xe5e7eb);
 
-            // 2. Camera
+            // Camera
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            camera.position.set(0, 0, 3); // Standard position
+            camera.position.set(0, 0, 2.5);
 
-            // 3. Renderer
+            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.outputEncoding = THREE.sRGBEncoding; // Better colors
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            // 4. Lights (Very Important for 3D)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // General light
-            scene.add(ambientLight);
+            // Lights
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambient);
+            const spot = new THREE.DirectionalLight(0xffffff, 0.8);
+            spot.position.set(2, 5, 5);
+            spot.castShadow = true;
+            scene.add(spot);
 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-            dirLight.position.set(2, 5, 5);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
+            // --- THE MAGIC: Create Texture from Fabric Canvas ---
+            const canvasTexture = new THREE.CanvasTexture(document.getElementById('c'));
+            canvasTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            // Note: Fabric canvas might be transparent, so we handle that in material
 
-            const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            backLight.position.set(-2, 2, -5);
-            scene.add(backLight);
-
-            // 5. Grid Helper (To see the floor)
-            const gridHelper = new THREE.GridHelper(10, 10);
-            gridHelper.position.y = -1; // Floor level
-            scene.add(gridHelper);
-
-            // 6. Load Model with Auto-Fix
+            // Load Shirt Model
             const loader = new THREE.GLTFLoader();
             loader.load('shirt.glb', function(gltf) {
                 shirtMesh = gltf.scene;
 
-                // --- AUTO FIX LOGIC START ---
-                // 1. Calculate Bounding Box (ප්‍රමාණය මැනීම)
+                // Auto-Center & Scale Logic
                 const box = new THREE.Box3().setFromObject(shirtMesh);
                 const size = box.getSize(new THREE.Vector3());
                 const center = box.getCenter(new THREE.Vector3());
-
-                // 2. Reset Position (මැදට ගැනීම)
-                // We move the shirt so its center aligns with (0,0,0)
-                shirtMesh.position.x = -center.x;
-                shirtMesh.position.y = -center.y; 
-                shirtMesh.position.z = -center.z;
-
-                // 3. Create a Parent Group to handle Rotation/Scale safely
-                const group = new THREE.Group();
-                group.add(shirtMesh);
-                scene.add(group);
-                shirtMesh = group; // Update reference to the group
-
-                // 4. Auto Scale (ස්ක්‍රීන් එකට ගැලපෙන සයිස් එකට හැදීම)
-                // We want the shirt to be roughly 1.5 units high
+                shirtMesh.position.x += (shirtMesh.position.x - center.x);
+                shirtMesh.position.y += (shirtMesh.position.y - center.y);
+                shirtMesh.position.z += (shirtMesh.position.z - center.z);
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const scaleFactor = 1.5 / maxDim;
-                shirtMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                
-                // --- AUTO FIX LOGIC END ---
+                const scale = 1.5 / maxDim;
+                shirtMesh.scale.set(scale, scale, scale);
 
-                // Apply default material fixes
+                // Apply Base Material
                 shirtMesh.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
-                        child.receiveShadow = true;
-                        // Keep original roughness/metalness but allow color change
-                        if(child.material) {
-                            child.material = new THREE.MeshStandardMaterial({
-                                color: 0xffffff,
-                                roughness: 0.5,
-                                metalness: 0.1,
-                                map: child.material.map // Keep texture if exists
-                            });
-                        }
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: 0xffffff, roughness: 0.6
+                        });
                     }
                 });
 
-                loaderDiv.style.display = 'none';
+                scene.add(shirtMesh);
+                document.getElementById('loader').style.display = 'none';
 
-            }, undefined, function(error) {
-                console.error(error);
-                loaderDiv.innerText = "Error Loading! Check Console (F12). Is 'shirt.glb' in the folder?";
-                loaderDiv.style.color = "red";
+                // --- ADD PRINT AREA (The Decal Plane) ---
+                // Instead of a small decal, we create a large "Print Area" plane
+                // that maps to the canvas size.
+                const planeGeo = new THREE.PlaneGeometry(0.8, 1.0); // Size of the print area on chest
+                const planeMat = new THREE.MeshBasicMaterial({
+                    map: canvasTexture,
+                    transparent: true,
+                    depthWrite: false, // Prevents Z-fighting
+                    polygonOffset: true,
+                    polygonOffsetFactor: -4
+                });
+
+                textureMesh = new THREE.Mesh(planeGeo, planeMat);
+                textureMesh.position.set(0, 0.1, 0.35); // Position on chest (Adjust Z if hidden)
+                scene.add(textureMesh);
+
             });
 
-            // 7. Controls
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            // Controls
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            
-            window.addEventListener('resize', onWindowResize);
+
+            // Render Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+                
+                // IMPORTANT: Tell Three.js texture has changed
+                if(textureMesh && textureMesh.material.map) {
+                   textureMesh.material.map.needsUpdate = true;
+                }
+            }
             animate();
+            
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
         }
 
-        // Functions
-        function onWindowResize() {
-            const container = document.getElementById('canvas-container');
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        // Feature: Change Color
-        window.updateColor = function(val) {
+        // Change Shirt Base Color
+        window.changeShirtColor = function(color) {
             if(shirtMesh) {
                 shirtMesh.traverse((child) => {
-                    if(child.isMesh) child.material.color.set(val);
+                    if(child.isMesh) child.material.color.set(color);
                 });
             }
         }
 
-        // Feature: Manual Adjustments
-        window.manualZoom = function(val) {
-            if(shirtMesh) shirtMesh.scale.set(val, val, val);
-        }
-        window.manualMoveY = function(val) {
-            if(shirtMesh) shirtMesh.position.y = parseFloat(val);
-        }
+        // Start
+        init3D();
 
-        // Feature: Logo Decal
-        document.getElementById('logoInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const tex = new THREE.TextureLoader().load(ev.target.result);
-                addDecal(tex);
-            }
-            reader.readAsDataURL(file);
-        });
-
-        function addDecal(texture) {
-            if(decalMesh) scene.remove(decalMesh);
-            const geo = new THREE.PlaneGeometry(0.5, 0.5);
-            const mat = new THREE.MeshBasicMaterial({ 
-                map: texture, 
-                transparent: true,
-                depthTest: false // Always show on top (Hack for curved surfaces)
-            });
-            decalMesh = new THREE.Mesh(geo, mat);
-            decalMesh.position.set(0, 0, 0.5); // Start in front
-            scene.add(decalMesh);
-            
-            // Allow scene to render "on top" correctly
-            decalMesh.renderOrder = 999; 
-            updateDecalTrans();
-        }
-
-        window.updateDecalTrans = function() {
-            if(!decalMesh) return;
-            const y = parseFloat(document.getElementById('logoY').value);
-            const s = parseFloat(document.getElementById('logoS').value);
-            decalMesh.position.y = y;
-            decalMesh.scale.set(s, s, 1);
-        }
-
-        window.downloadShot = function() {
-            renderer.render(scene, camera);
-            const link = document.createElement('a');
-            link.download = 'design.png';
-            link.href = renderer.domElement.toDataURL('image/png');
-            link.click();
-        }
-
-        init();
     </script>
 </body>
 </html>
