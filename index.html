@@ -3,57 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Shirt Editor - Front/Back & Watermark</title>
+    <title>Kinaa Cre - Pro Shirt Editor (Calibrated)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { overflow: hidden; background: #f3f4f6; }
-        /* Editor Canvas Background to show transparency */
         .canvas-bg { background-image: url('https://img.freepik.com/free-vector/gray-grid-mosaic-background_53876-118281.jpg'); background-size: cover; }
         .active-btn { background-color: #4f46e5 !important; color: white !important; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        input[type=range] { cursor: pointer; }
     </style>
 </head>
 <body class="flex h-screen text-gray-800 font-sans">
 
-    <div class="w-[450px] flex flex-col p-4 bg-white shadow-2xl z-10 border-r border-gray-200">
+    <div class="w-[450px] flex flex-col bg-white shadow-2xl z-10 border-r border-gray-200 h-full">
         
-        <div class="flex mb-4 border-2 border-gray-200 rounded-lg overflow-hidden">
-            <button onclick="switchView('front')" id="btnFront" class="flex-1 py-2 font-bold text-sm active-btn transition">FRONT DESIGN</button>
-            <button onclick="switchView('back')" id="btnBack" class="flex-1 py-2 font-bold text-sm bg-gray-100 text-gray-600 transition">BACK DESIGN</button>
+        <div class="p-4 border-b bg-gray-50">
+            <h1 class="font-black text-xl tracking-tighter text-indigo-600">KINAA CRE <span class="text-gray-400 text-sm font-normal">| Editor</span></h1>
         </div>
 
-        <div class="flex gap-2 mb-3 flex-wrap items-center">
-            <button onclick="addText()" class="bg-gray-800 text-white px-3 py-1 rounded text-xs hover:bg-black">+ Text</button>
-            <label class="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700 cursor-pointer">
-                + Image
-                <input type="file" id="imgLoader" accept="image/*" class="hidden">
-            </label>
-             <button onclick="deleteObject()" class="bg-red-100 text-red-600 px-3 py-1 rounded text-xs hover:bg-red-200">Delete</button>
-            <input type="color" id="tshirtColor" value="#ffffff" oninput="changeShirtColor(this.value)" class="h-8 w-8 cursor-pointer border rounded ml-auto" title="Shirt Base Color">
+        <div class="flex-1 overflow-y-auto p-4 space-y-6">
+
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">1. Select Side</label>
+                <div class="flex border-2 border-gray-200 rounded-lg overflow-hidden">
+                    <button onclick="switchView('front')" id="btnFront" class="flex-1 py-2 font-bold text-sm active-btn transition">FRONT</button>
+                    <button onclick="switchView('back')" id="btnBack" class="flex-1 py-2 font-bold text-sm bg-gray-100 text-gray-600 transition">BACK</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">2. Design Here</label>
+                <div class="relative border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+                    
+                    <div id="front-canvas-wrapper" class="canvas-bg shadow-sm">
+                        <canvas id="c-front" width="300" height="400"></canvas>
+                    </div>
+                    <div id="back-canvas-wrapper" class="canvas-bg shadow-sm hidden">
+                        <canvas id="c-back" width="300" height="400"></canvas>
+                    </div>
+
+                    <div class="absolute bottom-2 left-0 w-full text-center pointer-events-none">
+                         <span class="text-[10px] bg-white/80 px-2 py-1 rounded text-gray-500">Editable Area</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-3 flex-wrap">
+                    <button onclick="addText()" class="flex-1 bg-gray-800 text-white py-2 rounded text-xs font-bold hover:bg-black">+ Text</button>
+                    <label class="flex-1 bg-indigo-600 text-white py-2 rounded text-xs font-bold hover:bg-indigo-700 cursor-pointer text-center">
+                        + Image
+                        <input type="file" id="imgLoader" accept="image/*" class="hidden">
+                    </label>
+                    <button onclick="deleteObject()" class="w-8 flex items-center justify-center bg-red-100 text-red-600 rounded hover:bg-red-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-xs font-bold text-blue-800 uppercase">3. Calibrate Position</label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" id="showHelper" onchange="toggleHelper(this.checked)" class="rounded text-blue-600">
+                        <span class="text-[10px] text-blue-600 font-bold">Show Box</span>
+                    </label>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-[10px] text-gray-500 mb-1"><span>Move Up/Down</span> <span id="valY">0</span></div>
+                        <input type="range" min="-0.5" max="0.5" step="0.01" value="0.1" id="sliderY" oninput="updatePrintConfig()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[10px] text-gray-500 mb-1"><span>Area Size (Scale)</span> <span id="valS">1.0</span></div>
+                        <input type="range" min="0.5" max="2.0" step="0.05" value="1.0" id="sliderS" oninput="updatePrintConfig()">
+                    </div>
+                </div>
+                <p class="text-[10px] text-blue-500 mt-2 leading-tight">
+                    * If design is too high, drag "Move Up/Down" to the left. <br>
+                    * Use "Show Box" to see where the design area is.
+                </p>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">4. Shirt Color</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" id="tshirtColor" value="#ffffff" oninput="changeShirtColor(this.value)" class="h-10 w-full cursor-pointer border rounded">
+                </div>
+            </div>
+
         </div>
 
-        <div class="flex-1 relative border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
-            <p class="absolute top-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider z-20 pointer-events-none">Print Area</p>
-            
-            <div id="front-canvas-wrapper" class="canvas-bg shadow-sm">
-                <canvas id="c-front" width="350" height="450"></canvas>
-            </div>
-            <div id="back-canvas-wrapper" class="canvas-bg shadow-sm hidden">
-                <canvas id="c-back" width="350" height="450"></canvas>
-            </div>
-        </div>
-        
-        <div class="mt-4">
-             <button onclick="downloadWithWatermark()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-green-700 flex items-center justify-center gap-2">
+        <div class="p-4 border-t bg-gray-50">
+             <button onclick="downloadWithWatermark()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                DOWNLOAD CURRENT VIEW (Watermarked)
+                DOWNLOAD DESIGN
             </button>
-             <p class="text-xs text-gray-400 text-center mt-2">Protected by "kinaa cre" watermark.</p>
+             <p class="text-[10px] text-gray-400 text-center mt-2">Protected by "kinaa cre" watermark.</p>
         </div>
     </div>
 
-    <div id="3d-view" class="flex-1 bg-gray-200 relative">
-        <div id="loader" class="absolute inset-0 flex items-center justify-center text-gray-500 font-bold z-20 bg-gray-200/80">
-            Loading 3D Model...
+    <div id="3d-view" class="flex-1 bg-gray-300 relative shadow-inner">
+        <div id="loader" class="absolute inset-0 flex items-center justify-center text-gray-500 font-bold z-20 bg-gray-200/90">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                Loading Model...
+            </div>
         </div>
     </div>
 
@@ -63,49 +120,39 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
     <script>
-        // ==========================================
-        // STATE MANAGEMENT
-        // ==========================================
-        let currentView = 'front'; // 'front' or 'back'
+        // ================= STATE =================
+        let currentView = 'front'; 
+        let printConfig = { y: 0.1, scale: 1.0 }; // Default values
 
-        // ==========================================
-        // PART 1: FABRIC.JS (THE 2D EDITORS)
-        // ==========================================
-        // Initialize TWO separate canvases
-        const fabricFront = new fabric.Canvas('c-front');
-        const fabricBack = new fabric.Canvas('c-back');
+        // ================= FABRIC JS (2D) =================
+        const fabricFront = new fabric.Canvas('c-front', { backgroundColor: '#ffffff00' }); // Transparent
+        const fabricBack = new fabric.Canvas('c-back', { backgroundColor: '#ffffff00' });
 
-        // Add placeholder text to both
-        fabricFront.add(new fabric.Text('FRONT DESIGN', { left: 70, top: 200, fontFamily: 'Arial', fill: '#333', fontSize: 30, opacity: 0.5 }));
-        fabricBack.add(new fabric.Text('BACK DESIGN', { left: 80, top: 200, fontFamily: 'Arial', fill: '#333', fontSize: 30, opacity: 0.5 }));
+        // Add placeholders
+        const t1 = new fabric.Text('FRONT', { left: 80, top: 180, fontFamily: 'Arial', fill: '#333', fontSize: 40, opacity: 0.3 });
+        const t2 = new fabric.Text('BACK', { left: 90, top: 180, fontFamily: 'Arial', fill: '#333', fontSize: 40, opacity: 0.3 });
+        fabricFront.add(t1);
+        fabricBack.add(t2);
 
-        // Helper to get currently active canvas
-        function getCurrentCanvas() {
-            return currentView === 'front' ? fabricFront : fabricBack;
-        }
+        function getCurrentCanvas() { return currentView === 'front' ? fabricFront : fabricBack; }
 
-        // View Switcher Logic
         window.switchView = function(view) {
             currentView = view;
-            // Update UI buttons
             document.getElementById('btnFront').classList.toggle('active-btn', view === 'front');
             document.getElementById('btnBack').classList.toggle('active-btn', view === 'back');
             document.getElementById('btnFront').classList.toggle('bg-gray-100', view !== 'front');
             document.getElementById('btnBack').classList.toggle('bg-gray-100', view !== 'back');
             
-            // Toggle Canvases Visibility
             document.getElementById('front-canvas-wrapper').classList.toggle('hidden', view !== 'front');
             document.getElementById('back-canvas-wrapper').classList.toggle('hidden', view !== 'back');
-
-            // Move 3D Camera
+            
             moveCameraToView(view);
         }
 
-        // --- 2D Tools ---
-        function addText() {
-            const canvas = getCurrentCanvas();
-            const t = new fabric.IText('Type Here', { left: 50, top: 50, fontFamily: 'Arial', fill: '#000', fontSize: 24 });
-            canvas.add(t); canvas.setActiveObject(t);
+        // Tools
+        window.addText = function() {
+            const t = new fabric.IText('Text', { left: 100, top: 100, fontFamily: 'Arial', fill: '#000000', fontSize: 30 });
+            getCurrentCanvas().add(t); getCurrentCanvas().setActiveObject(t);
         }
 
         document.getElementById('imgLoader').addEventListener('change', function(e) {
@@ -123,78 +170,89 @@
             reader.readAsDataURL(e.target.files[0]);
         });
 
-        function deleteObject() {
-            const canvas = getCurrentCanvas();
-            if (canvas.getActiveObject()) canvas.remove(canvas.getActiveObject());
+        window.deleteObject = function() {
+            const c = getCurrentCanvas();
+            if(c.getActiveObject()) c.remove(c.getActiveObject());
         }
 
-        // ==========================================
-        // PART 2: THREE.JS (THE 3D PREVIEW)
-        // ==========================================
+        // ================= THREE JS (3D) =================
         let scene, camera, renderer, controls, shirtMesh;
         let frontTexture, backTexture, frontPlaneMesh, backPlaneMesh;
-        
-        // Config for placement (Adjust these if it doesn't fit your model)
-        // Z_OFFSET: How far out from center. Positive for front, negative for back.
-        const Z_OFFSET_FRONT = 0.35; 
+        let boxHelperFront, boxHelperBack;
+
+        const Z_OFFSET_FRONT = 0.35; // How far out from shirt
         const Z_OFFSET_BACK = -0.35;
-        const PRINT_AREA_WIDTH = 0.7;
-        const PRINT_AREA_HEIGHT = 0.9;
-
-
+        
         function init3D() {
             const container = document.getElementById('3d-view');
-            scene = new THREE.Scene(); scene.background = new THREE.Color(0xe5e7eb);
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0xd1d5db);
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            camera.position.set(0, 0, 2.5); // Start at front view
+            camera.position.set(0, 0, 2.5);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.shadowMap.enabled = true;
+            renderer.outputEncoding = THREE.sRGBEncoding;
             container.appendChild(renderer.domElement);
 
             // Lights
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const spot = new THREE.DirectionalLight(0xffffff, 0.8); spot.position.set(2, 5, 5); spot.castShadow = true; scene.add(spot);
-            const backLight = new THREE.DirectionalLight(0xffffff, 0.4); backLight.position.set(0, 2, -5); scene.add(backLight);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8); scene.add(ambient);
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8); mainLight.position.set(3, 5, 5); mainLight.castShadow = true; scene.add(mainLight);
+            const backLight = new THREE.DirectionalLight(0xffffff, 0.5); backLight.position.set(-3, 2, -5); scene.add(backLight);
 
-            // --- CREATE TEXTURES & PRINT PLANES ---
-            // Fabric canvases might be transparent, so handle that in material
+            // Textures
             frontTexture = new THREE.CanvasTexture(document.getElementById('c-front'));
             backTexture = new THREE.CanvasTexture(document.getElementById('c-back'));
-            frontTexture.anisotropy = backTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-            const planeGeo = new THREE.PlaneGeometry(PRINT_AREA_WIDTH, PRINT_AREA_HEIGHT);
+            frontTexture.encoding = THREE.sRGBEncoding;
+            backTexture.encoding = THREE.sRGBEncoding;
+            frontTexture.anisotropy = 16;
             
-            // FRONT MESH
-            const frontMat = new THREE.MeshBasicMaterial({ map: frontTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
+            // --- PRINT PLANES ---
+            const planeGeo = new THREE.PlaneGeometry(0.75, 1.0); // Aspect ratio similar to 300x400 canvas
+            
+            // Front Plane
+            const frontMat = new THREE.MeshBasicMaterial({ map: frontTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
             frontPlaneMesh = new THREE.Mesh(planeGeo, frontMat);
-            frontPlaneMesh.position.set(0, 0.1, Z_OFFSET_FRONT);
+            frontPlaneMesh.position.set(0, printConfig.y, Z_OFFSET_FRONT);
             scene.add(frontPlaneMesh);
 
-            // BACK MESH (Rotated 180 deg)
-            const backMat = new THREE.MeshBasicMaterial({ map: backTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
+            // Back Plane
+            const backMat = new THREE.MeshBasicMaterial({ map: backTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
             backPlaneMesh = new THREE.Mesh(planeGeo, backMat);
-            backPlaneMesh.rotation.y = Math.PI; // Rotate 180 degrees for back
-            backPlaneMesh.position.set(0, 0.1, Z_OFFSET_BACK); // Negative Z value
+            backPlaneMesh.rotation.y = Math.PI;
+            backPlaneMesh.position.set(0, printConfig.y, Z_OFFSET_BACK);
             scene.add(backPlaneMesh);
 
+            // Helpers (Visual Box)
+            boxHelperFront = new THREE.BoxHelper(frontPlaneMesh, 0x0000ff);
+            boxHelperBack = new THREE.BoxHelper(backPlaneMesh, 0x0000ff);
+            boxHelperFront.visible = false; 
+            boxHelperBack.visible = false;
+            scene.add(boxHelperFront);
+            scene.add(boxHelperBack);
 
-            // Load Shirt Model
+            // Load Shirt
             const loader = new THREE.GLTFLoader();
             loader.load('shirt.glb', function(gltf) {
                 shirtMesh = gltf.scene;
-                // Auto-Center & Scale logic (same as before)
+                
+                // Auto Center
                 const box = new THREE.Box3().setFromObject(shirtMesh);
                 const center = box.getCenter(new THREE.Vector3());
-                shirtMesh.position.sub(center); // Center it at 0,0,0
+                shirtMesh.position.sub(center); 
+                
+                // Auto Scale
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const scale = 1.5 / maxDim;
                 shirtMesh.scale.set(scale, scale, scale);
 
-                shirtMesh.traverse((child) => {
-                    if (child.isMesh) child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+                shirtMesh.traverse(child => {
+                    if(child.isMesh) {
+                        child.castShadow = true; 
+                        child.receiveShadow = true;
+                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+                    }
                 });
                 scene.add(shirtMesh);
                 document.getElementById('loader').style.display = 'none';
@@ -202,85 +260,100 @@
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            // Limit rotation to avoid weird angles
-            controls.maxPolarAngle = Math.PI / 1.2;
-            controls.minPolarAngle = Math.PI / 4;
+            controls.maxPolarAngle = Math.PI / 1.5;
 
             animate();
-            window.addEventListener('resize', onResize);
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
         }
 
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
-            // Important: Update both textures constantly
             if(frontTexture) frontTexture.needsUpdate = true;
             if(backTexture) backTexture.needsUpdate = true;
+            
+            // Update helpers if visible
+            if(boxHelperFront.visible) { boxHelperFront.update(); boxHelperBack.update(); }
         }
 
-        function onResize() {
-            const container = document.getElementById('3d-view');
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
+        // ================= FUNCTIONS =================
 
-        function moveCameraToView(view) {
-            const targetPos = view === 'front' ? new THREE.Vector3(0, 0, 2.5) : new THREE.Vector3(0, 0, -2.5);
-            // Simple animation could be added here, for now just jump
-            camera.position.copy(targetPos);
+        window.moveCameraToView = function(view) {
+            const z = view === 'front' ? 2.5 : -2.5;
+            camera.position.set(0, 0, z);
+            controls.target.set(0,0,0);
             controls.update();
         }
 
         window.changeShirtColor = function(color) {
-            if(shirtMesh) {
-                shirtMesh.traverse((child) => { if(child.isMesh) child.material.color.set(color); });
+            if(shirtMesh) shirtMesh.traverse(c => { if(c.isMesh) c.material.color.set(color); });
+        }
+
+        // --- NEW: Calibration Logic ---
+        window.updatePrintConfig = function() {
+            const y = parseFloat(document.getElementById('sliderY').value);
+            const s = parseFloat(document.getElementById('sliderS').value);
+            
+            document.getElementById('valY').innerText = y;
+            document.getElementById('valS').innerText = s;
+
+            if(frontPlaneMesh && backPlaneMesh) {
+                // Update Y position
+                frontPlaneMesh.position.y = y;
+                backPlaneMesh.position.y = y;
+
+                // Update Scale
+                frontPlaneMesh.scale.set(s, s, 1);
+                backPlaneMesh.scale.set(s, s, 1);
             }
         }
 
-        // ==========================================
-        // PART 3: WATERMARKED DOWNLOAD
-        // ==========================================
-        window.downloadWithWatermark = function() {
-            // 1. Ensure camera is looking straight at the current view
-            moveCameraToView(currentView);
-            renderer.render(scene, camera); // Force a render to capture latest state
+        window.toggleHelper = function(checked) {
+            if(boxHelperFront && boxHelperBack) {
+                boxHelperFront.visible = checked;
+                boxHelperBack.visible = checked;
+            }
+        }
 
-            // 2. Create a temporary 2D canvas to draw the watermark
+        // --- Watermark Download ---
+        window.downloadWithWatermark = function() {
+            moveCameraToView(currentView);
+            // Render High Res
+            renderer.render(scene, camera);
+            
             const tempCanvas = document.createElement('canvas');
             const ctx = tempCanvas.getContext('2d');
             tempCanvas.width = renderer.domElement.width;
             tempCanvas.height = renderer.domElement.height;
 
-            // 3. Draw the 3D scene onto the temp canvas
             const img = new Image();
             img.onload = function() {
                 ctx.drawImage(img, 0, 0);
-
-                // 4. Add Watermark Properties
-                const text = "kinaa cre";
-                ctx.font = "bold 80px sans-serif";
-                ctx.fillStyle = "rgba(255, 255, 255, 0.4)"; // Semi-transparent white
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
                 
-                // Rotate and draw text across center
-                ctx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
-                ctx.rotate(-Math.PI / 4); // Rotate -45 degrees
+                // Watermark
+                const text = "kinaa cre";
+                ctx.font = "bold 60px sans-serif";
+                ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+                ctx.textAlign = "center";
+                ctx.save();
+                ctx.translate(tempCanvas.width/2, tempCanvas.height/2);
+                ctx.rotate(-Math.PI / 4);
                 ctx.fillText(text, 0, 0);
+                ctx.restore();
 
-                // 5. Trigger Download
                 const link = document.createElement('a');
-                link.download = `shirt_design_${currentView}_watermarked.png`;
+                link.download = `kinaa_cre_design_${currentView}.png`;
                 link.href = tempCanvas.toDataURL('image/png');
                 link.click();
             };
-            // Load the image from the 3D renderer data
             img.src = renderer.domElement.toDataURL('image/png');
         }
 
-        // Start Application
         init3D();
 
     </script>
