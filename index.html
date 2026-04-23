@@ -1,275 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kinaa Cre | Manual Fix Editor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { overflow: hidden; background: #e5e7eb; font-family: 'Inter', sans-serif; }
-        .canvas-bg { background-image: url('https://img.freepik.com/free-vector/gray-grid-mosaic-background_53876-118281.jpg'); background-size: cover; }
-        .active-side { background-color: #2563eb !important; color: white !important; }
-        input[type=range] { accent-color: #2563eb; height: 6px; border-radius: 5px; cursor: pointer; }
-        /* Hide scrollbar */
-        ::-webkit-scrollbar { width: 0px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pro Cricket App - License Admin</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 { color: #38bdf8; text-align: center; }
+    .container { max-width: 1000px; margin: auto; background: #1e293b; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    
+    .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background-color: #0f172a; color: #94a3b8; font-weight: 600; }
+    
+    .badge-active { background: #16a34a; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+    .badge-blocked { background: #dc2626; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+    
+    .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    .btn-add { background: #10b981; color: white; font-size: 15px; }
+    .btn-add:hover { background: #059669; }
+    .btn-edit { background: #3b82f6; color: white; }
+    .btn-edit:hover { background: #2563eb; }
+    
+    /* Modal Styles */
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; backdrop-filter: blur(2px); }
+    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e293b; padding: 25px; border-radius: 10px; z-index: 100; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal h3 { margin-top: 0; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: #cbd5e1; font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #475569; border-radius: 5px; background: #0f172a; color: white; box-sizing: border-box; font-family: inherit; }
+    .form-group input:read-only { background: #1e293b; color: #94a3b8; cursor: not-allowed; }
+    
+    .btn-save { background: #10b981; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 16px; }
+    .btn-save:hover { background: #059669; }
+    .btn-cancel { background: #64748b; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 16px; }
+    .btn-cancel:hover { background: #475569; }
+  </style>
 </head>
-<body class="flex h-screen text-gray-800">
+<body>
 
-    <div class="w-[400px] flex flex-col bg-white shadow-2xl z-20 border-r border-gray-300 h-full">
-        
-        <div class="p-4 border-b bg-gray-50">
-            <h1 class="font-black text-xl text-gray-800">KINAA CRE <span class="text-blue-600">FIXED</span></h1>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-5 space-y-6">
-
-            <div class="flex rounded-lg overflow-hidden border border-gray-300">
-                <button onclick="switchView('front')" id="btnFront" class="flex-1 py-3 font-bold text-sm active-side transition bg-gray-50 text-gray-600">FRONT</button>
-                <button onclick="switchView('back')" id="btnBack" class="flex-1 py-3 font-bold text-sm transition bg-gray-50 text-gray-600 border-l">BACK</button>
-            </div>
-
-            <div class="relative border-2 border-dashed border-gray-300 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden">
-                <div id="front-wrapper" class="canvas-bg"><canvas id="c-front" width="280" height="350"></canvas></div>
-                <div id="back-wrapper" class="canvas-bg hidden"><canvas id="c-back" width="280" height="350"></canvas></div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="addText()" class="bg-gray-800 text-white py-2 rounded text-xs font-bold hover:bg-black">+ TEXT</button>
-                <label class="bg-blue-600 text-white py-2 rounded text-xs font-bold hover:bg-blue-700 cursor-pointer text-center">
-                    + IMAGE <input type="file" id="imgLoader" accept="image/*" class="hidden">
-                </label>
-                <button onclick="deleteObj()" class="bg-red-100 text-red-600 py-2 rounded text-xs font-bold hover:bg-red-200">DELETE</button>
-            </div>
-
-            <hr class="border-gray-200">
-
-            <div>
-                <label class="text-[11px] font-bold text-gray-400 uppercase">3. Design Position</label>
-                <div class="mt-2 space-y-3">
-                    <div>
-                        <span class="text-[10px] text-gray-500">Design Up/Down</span>
-                        <input type="range" min="-2.0" max="2.0" step="0.01" value="0.2" id="designY" oninput="updatePositions()" class="w-full">
-                    </div>
-                    <div>
-                        <span class="text-[10px] text-gray-500">Design Size</span>
-                        <input type="range" min="0.2" max="2.5" step="0.05" value="1.0" id="designS" oninput="updatePositions()" class="w-full">
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                <label class="text-[11px] font-bold text-yellow-700 uppercase flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-                    4. Fix Shirt Height
-                </label>
-                <p class="text-[10px] text-yellow-600 mb-2 mt-1">If shirt is too high, drag this slider left.</p>
-                
-                <div>
-                    <span class="text-[10px] text-gray-500">Move Shirt Up/Down</span>
-                    <input type="range" min="-5.0" max="5.0" step="0.1" value="-1.0" id="shirtY" oninput="updatePositions()" class="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer">
-                </div>
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <label class="text-[11px] font-bold text-gray-400 uppercase">Shirt Color</label>
-                <input type="color" oninput="setColor(this.value)" class="w-8 h-8 rounded border-none cursor-pointer">
-            </div>
-
-        </div>
-
-        <div class="p-4 border-t bg-gray-50">
-            <button onclick="downloadDesign()" class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg">
-                DOWNLOAD PREVIEW
-            </button>
-        </div>
+  <div class="container">
+    <h2>🏏 Pro Cricket App - License Dashboard</h2>
+    
+    <div class="header-actions">
+      <p style="color: #94a3b8; margin: 0;">Manage your customer rentals and software access.</p>
+      <button class="btn btn-add" onclick="openAddModal()">+ Add New License</button>
     </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Device ID</th>
+          <th>Customer Name</th>
+          <th>Status</th>
+          <th>Expire Date & Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="licenseTableBody">
+        <tr><td colspan="5" style="text-align:center; padding: 20px;">Loading data...</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-    <div id="canvas-container" class="flex-1 relative bg-gray-200">
-        <div id="loading" class="absolute inset-0 flex items-center justify-center bg-gray-200/90 z-10">
-            <span class="text-blue-600 font-bold animate-pulse">Loading Shirt...</span>
-        </div>
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="editModal">
+    <h3 id="modalTitle">Edit License</h3>
+    
+    <div class="form-group">
+      <label>Device ID:</label>
+      <input type="text" id="editDeviceId" placeholder="Enter Device ID">
     </div>
+    
+    <div class="form-group">
+      <label>Customer Name:</label>
+      <input type="text" id="editName" placeholder="e.g. Kamal Club">
+    </div>
+    
+    <div class="form-group">
+      <label>Access Status:</label>
+      <select id="editStatus">
+        <option value="true">Active (Allow Access)</option>
+        <option value="false">Blocked (Deny Access)</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>Expiration Date & Time:</label>
+      <input type="datetime-local" id="editExpire">
+    </div>
+    
+    <div class="form-group">
+      <label>Screen Message (If Blocked/Expired):</label>
+      <textarea id="editMessage" rows="3" placeholder="Please contact admin to renew."></textarea>
+    </div>
+    
+    <button class="btn btn-save" id="saveBtn">Save License</button>
+    <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+  </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script type="module">
+    // Firebase Imports (setDoc එක අලුතින් එකතු කරලා තියෙන්නෙ)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-    <script>
-        let currentSide = 'front';
-        let shirtMesh, frontDecal, backDecal;
-        let scene, camera, renderer, controls;
+    // Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCbl8DRKq5cgye8JxWPUNwFewAPZfwRSiY",
+      authDomain: "cricket-7175c.firebaseapp.com",
+      projectId: "cricket-7175c",
+      storageBucket: "cricket-7175c.firebasestorage.app",
+      messagingSenderId: "870290283670",
+      appId: "1:870290283670:web:c57cf94d52aeb7fdb576b7",
+      measurementId: "G-TP4NTJ7Z4Z"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Global variables
+    let licensesData = {};
+    let isEditMode = false; // අලුතින් දානවද, තියෙන එකක් edit කරනවද කියල බලන්න
+
+    // Fetch data in real-time
+    const licensesCol = collection(db, "licenses");
+    onSnapshot(licensesCol, (snapshot) => {
+      const tbody = document.getElementById("licenseTableBody");
+      tbody.innerHTML = ""; 
+
+      if (snapshot.empty) {
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color:#94a3b8;'>No licenses found. Add a new one!</td></tr>";
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const id = docSnap.id;
+        const data = docSnap.data();
+        licensesData[id] = data;
+
+        const isActive = data.isActive;
+        const statusBadge = isActive 
+          ? `<span class="badge-active">Active</span>` 
+          : `<span class="badge-blocked">Blocked</span>`;
+
+        let dateStr = "N/A";
+        if(data.expireAt) {
+          const dateObj = new Date(data.expireAt);
+          dateStr = dateObj.toLocaleString(); 
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-family: monospace; color: #38bdf8; font-size: 13px;">${id}</td>
+          <td style="font-weight: bold;">${data.customerName || 'New User'}</td>
+          <td>${statusBadge}</td>
+          <td style="font-size: 14px; color: #cbd5e1;">${dateStr}</td>
+          <td><button class="btn btn-edit" onclick="openEditModal('${id}')">Edit</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+
+    // --- Modal Logic --- //
+    
+    // 1. Add New License Modal එක ඕපන් කිරීම
+    window.openAddModal = function() {
+      isEditMode = false;
+      document.getElementById("modalTitle").innerText = "Add New License";
+      
+      // Form එක හිස් කිරීම
+      document.getElementById("editDeviceId").value = "";
+      document.getElementById("editDeviceId").readOnly = false; // ID එක Type කරන්න දෙනවා
+      document.getElementById("editName").value = "";
+      document.getElementById("editStatus").value = "true";
+      document.getElementById("editExpire").value = "";
+      document.getElementById("editMessage").value = "ඔබගේ මෘදුකාංගය සක්‍රීය කර නොමැත. කරුණාකර ඇඩ්මින් සම්බන්ධ කරගන්න.";
+
+      document.getElementById("overlay").style.display = "block";
+      document.getElementById("editModal").style.display = "block";
+    }
+
+    // 2. තියෙන License එකක් Edit කරන්න ඕපන් කිරීම
+    window.openEditModal = function(id) {
+      isEditMode = true;
+      document.getElementById("modalTitle").innerText = "Edit License";
+      
+      const data = licensesData[id];
+      if(!data) return;
+
+      document.getElementById("editDeviceId").value = id;
+      document.getElementById("editDeviceId").readOnly = true; // Edit කරද්දි ID එක වෙනස් කරන්න බෑ
+      document.getElementById("editName").value = data.customerName || "";
+      document.getElementById("editStatus").value = data.isActive ? "true" : "false";
+      
+      if (data.expireAt) {
+        const d = new Date(data.expireAt);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        document.getElementById("editExpire").value = d.toISOString().slice(0, 16);
+      } else {
+        document.getElementById("editExpire").value = "";
+      }
+
+      document.getElementById("editMessage").value = data.adminMessage || "";
+
+      document.getElementById("overlay").style.display = "block";
+      document.getElementById("editModal").style.display = "block";
+    }
+
+    // Modal එක Close කිරීම
+    window.closeModal = function() {
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    // Save බොත්තම එබූ විට Database එකට යැවීම
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const id = document.getElementById("editDeviceId").value.trim();
+      if (!id) {
+        alert("Please enter a Device ID!");
+        return;
+      }
+
+      const newName = document.getElementById("editName").value || "Unknown Customer";
+      const newStatus = document.getElementById("editStatus").value === "true";
+      
+      const htmlDate = document.getElementById("editExpire").value;
+      const newExpire = htmlDate ? new Date(htmlDate).toISOString() : new Date().toISOString();
+      
+      const newMessage = document.getElementById("editMessage").value;
+
+      try {
+        const docRef = doc(db, "licenses", id);
         
-        // --- 1. SETUP ---
-        const fCanvas = new fabric.Canvas('c-front', { backgroundColor: 'transparent' });
-        const bCanvas = new fabric.Canvas('c-back', { backgroundColor: 'transparent' });
-        fCanvas.add(new fabric.Text('FRONT', { left: 80, top: 150, fontSize: 40, fontFamily: 'Arial', fill:'rgba(0,0,0,0.3)' }));
-        bCanvas.add(new fabric.Text('BACK', { left: 90, top: 150, fontSize: 40, fontFamily: 'Arial', fill:'rgba(0,0,0,0.3)' }));
-
-        function init3D() {
-            const container = document.getElementById('canvas-container');
-            
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xd1d5db);
-
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            camera.position.set(0, 0, 4); // Camera further back
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            container.appendChild(renderer.domElement);
-
-            // Lights
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const mainLight = new THREE.DirectionalLight(0xffffff, 1);
-            mainLight.position.set(2, 5, 5);
-            mainLight.castShadow = true;
-            scene.add(mainLight);
-
-            // --- PLANES FOR DESIGN ---
-            const geo = new THREE.PlaneGeometry(0.8, 1.0);
-            
-            const fTex = new THREE.CanvasTexture(document.getElementById('c-front'));
-            const bTex = new THREE.CanvasTexture(document.getElementById('c-back'));
-            fTex.encoding = THREE.sRGBEncoding; fTex.anisotropy = 16;
-            bTex.encoding = THREE.sRGBEncoding; bTex.anisotropy = 16;
-
-            frontDecal = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: fTex, transparent: true, depthWrite: false }));
-            backDecal = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: bTex, transparent: true, depthWrite: false }));
-            backDecal.rotation.y = Math.PI;
-
-            // Initially place decimals
-            scene.add(frontDecal);
-            scene.add(backDecal);
-            
-            // --- LOAD SHIRT ---
-            const loader = new THREE.GLTFLoader();
-            loader.load('shirt.glb', (gltf) => {
-                shirtMesh = gltf.scene;
-
-                // --- KEY FIX: MANUAL CENTER OVERRIDE ---
-                // We don't rely fully on auto-box because your model origin is weird.
-                // We just scale it and add it. User will use the slider to fix Y.
-                
-                const box = new THREE.Box3().setFromObject(shirtMesh);
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const scale = 2.0 / maxDim; 
-                shirtMesh.scale.set(scale, scale, scale);
-                
-                // Traverse to enable shadows/materials
-                shirtMesh.traverse(child => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
-                    }
-                });
-
-                scene.add(shirtMesh);
-                document.getElementById('loading').style.display = 'none';
-
-                // FORCE UPDATE POSITIONS ON LOAD
-                updatePositions();
-
-            });
-
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            animate();
-            window.addEventListener('resize', onResize);
+        if (isEditMode) {
+          // තියෙන එකක් Update කරනවා නම් (updateDoc)
+          await updateDoc(docRef, {
+            customerName: newName,
+            isActive: newStatus,
+            expireAt: newExpire,
+            adminMessage: newMessage
+          });
+          alert("License Updated Successfully!");
+        } else {
+          // අලුතින්ම Add කරනවා නම් (setDoc)
+          await setDoc(docRef, {
+            customerName: newName,
+            isActive: newStatus,
+            expireAt: newExpire,
+            adminMessage: newMessage
+          });
+          alert("New License Added Successfully!");
         }
+        
+        closeModal();
+      } catch (error) {
+        console.error("Error saving document: ", error);
+        alert("Error saving data! Check console for details.");
+      }
+    });
 
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-            if(frontDecal.material.map) frontDecal.material.map.needsUpdate = true;
-            if(backDecal.material.map) backDecal.material.map.needsUpdate = true;
-        }
-
-        function onResize() {
-            const c = document.getElementById('canvas-container');
-            camera.aspect = c.clientWidth / c.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(c.clientWidth, c.clientHeight);
-        }
-
-        // --- 2. LOGIC ---
-
-        window.updatePositions = () => {
-            // 1. Get Values
-            const shirtY = parseFloat(document.getElementById('shirtY').value);
-            const desY = parseFloat(document.getElementById('designY').value);
-            const desS = parseFloat(document.getElementById('designS').value);
-
-            // 2. Move Shirt (This is the fix!)
-            if(shirtMesh) {
-                shirtMesh.position.y = shirtY;
-            }
-
-            // 3. Move Decals
-            if(frontDecal && backDecal) {
-                frontDecal.position.y = desY;
-                backDecal.position.y = desY;
-                
-                frontDecal.scale.set(desS, desS, 1);
-                backDecal.scale.set(desS, desS, 1);
-                
-                // Depth (Z) - Keep roughly constant or add slider if needed
-                frontDecal.position.z = 0.4;
-                backDecal.position.z = -0.4;
-            }
-        }
-
-        window.switchView = function(side) {
-            currentSide = side;
-            document.getElementById('btnFront').className = side === 'front' ? 'flex-1 py-3 font-bold text-sm active-side transition bg-blue-600 text-white' : 'flex-1 py-3 font-bold text-sm transition bg-gray-50 text-gray-600';
-            document.getElementById('btnBack').className = side === 'back' ? 'flex-1 py-3 font-bold text-sm active-side transition bg-blue-600 text-white' : 'flex-1 py-3 font-bold text-sm transition bg-gray-50 text-gray-600 border-l';
-            document.getElementById('front-wrapper').classList.toggle('hidden', side !== 'front');
-            document.getElementById('back-wrapper').classList.toggle('hidden', side !== 'back');
-            
-            const z = side === 'front' ? 4 : -4;
-            camera.position.set(0, 0, z);
-            controls.target.set(0,0,0);
-        }
-
-        window.setColor = (col) => {
-            if(shirtMesh) shirtMesh.traverse(c => { if(c.isMesh) c.material.color.set(col); });
-        }
-
-        // Tools
-        function getCanvas() { return currentSide === 'front' ? fCanvas : bCanvas; }
-        window.addText = () => {
-            const t = new fabric.IText('Text', { left: 80, top: 100, fontSize: 30 });
-            getCanvas().add(t); getCanvas().setActiveObject(t);
-        }
-        document.getElementById('imgLoader').addEventListener('change', (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image(); img.src = ev.target.result;
-                img.onload = () => {
-                    const i = new fabric.Image(img); i.scaleToWidth(150);
-                    getCanvas().add(i); getCanvas().centerObject(i);
-                }
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        });
-        window.deleteObj = () => { if(getCanvas().getActiveObject()) getCanvas().remove(getCanvas().getActiveObject()); }
-
-        window.downloadDesign = () => {
-            renderer.render(scene, camera);
-            const link = document.createElement('a');
-            link.download = `kinaa_design_${currentSide}.png`;
-            link.href = renderer.domElement.toDataURL();
-            link.click();
-        }
-
-        init3D();
-    </script>
+  </script>
 </body>
 </html>
